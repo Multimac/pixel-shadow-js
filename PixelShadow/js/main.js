@@ -153,7 +153,7 @@
 
             m_renderer.clearTarget(null);
 
-            scene.add(m_lightQuad);    
+            scene.add(m_lightQuad);
             for (var i = 0; i < m_lights.length; i++) {
                 var l = m_lights[i];
                 
@@ -181,7 +181,7 @@
             options = {
                 map: m_sceneTarget,
                 blending: THREE.CustomBlending,
-                blendEquation: THREE.MultiplyEquation,
+                blendEquation: THREE.AddEquation,
                 blendSrc: THREE.DstColorFactor,
                 blendDst: THREE.SrcColorFactor,
                 transparent: true
