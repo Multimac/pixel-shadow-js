@@ -109,7 +109,7 @@ class ShadowJS {
     get exponent() { return this.m_exponent; }
     set exponent(val) { this.m_exponent = val; }
     get lightGeometry() {
-        return this.m_lightGeometry.clone();
+        return new THREE.PlaneGeometry(this.m_lightSize, this.m_lightSize);
     }
     dispose() {
         this.m_readTarget.dispose();

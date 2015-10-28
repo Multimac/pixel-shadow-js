@@ -38,9 +38,8 @@ class ShadowJS {
     public get exponent(): number { return this.m_exponent; }
     public set exponent(val: number) { this.m_exponent = val; }
 
-    private m_lightGeometry: THREE.PlaneGeometry;
     public get lightGeometry(): THREE.PlaneGeometry {
-        return <THREE.PlaneGeometry>this.m_lightGeometry.clone();
+        return new THREE.PlaneGeometry(this.m_lightSize, this.m_lightSize);
     }
 
     private m_lightSize: number;
@@ -291,7 +290,7 @@ class ShadowJS {
 
     public generateShadowMap(renderer: THREE.WebGLRenderer, sceneTarget: THREE.WebGLRenderTarget, lightPos: THREE.Vector3, lightColor: THREE.Vector4) {
         lightPos.z = 0; // Ignore z component of given vector
-        
+
         // Prepare renderer
         renderer.setViewport(0, 0, sceneTarget.width, sceneTarget.height);
 
