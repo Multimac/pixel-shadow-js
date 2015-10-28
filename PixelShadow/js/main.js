@@ -104,9 +104,10 @@
         m_imageTwo = new THREE.Mesh(new THREE.PlaneGeometry(1, 1));
         m_completeScene.add(m_imageTwo);
 
-        m_lightSize = 512;
+        m_shadow = new ShadowJS(256, { renderTargetSize: 1024 });
+
         m_lightQuad = new THREE.Mesh(
-            new THREE.PlaneGeometry(m_lightSize, m_lightSize)
+            m_shadow.lightGeometry
         );
         m_lights = [
             { pos: new THREE.Vector3( 100, -100, 0), color: new THREE.Vector4(1, 1, 0, 1.00) },
@@ -115,8 +116,6 @@
             { pos: new THREE.Vector3( 400,  100, 0), color: new THREE.Vector4(1, 1, 1, 1.00) },
             { pos: new THREE.Vector3(-150, -150, 0), color: new THREE.Vector4(1, 1, 1, 0.25) }
         ];
-
-        m_shadow = new ShadowJS(m_lightSize);
 
         // Load external content
         var loadingManager = new THREE.LoadingManager();

@@ -9,12 +9,12 @@ class ShadowJS {
             throw "TODO: Exception";
         }
         this.m_loadingCount = 0;
-        this.m_lightSize = lightSize;
         this.m_minBlur = ShadowJS.default(options.minBlur, 0.0);
         this.m_maxBlur = ShadowJS.default(options.minBlur, 3.0);
         this.m_bias = ShadowJS.default(options.minBlur, 2.0);
         this.m_ambient = ShadowJS.default(options.minBlur, 0.25);
         this.m_exponent = ShadowJS.default(options.minBlur, 1.0);
+        this.m_lightSize = lightSize;
         var halfLightSize = lightSize / 2.0;
         this.m_lightCamera = new THREE.OrthographicCamera(-halfLightSize, halfLightSize, halfLightSize, -halfLightSize, 0.0, 1.0);
         this.m_fullScreenCamera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0.0, 1.0);
@@ -110,6 +110,9 @@ class ShadowJS {
     set ambient(val) { this.m_ambient = val; }
     get exponent() { return this.m_exponent; }
     set exponent(val) { this.m_exponent = val; }
+    get lightGeometry() {
+        return this.m_lightGeometry.clone();
+    }
     dispose() {
         this.m_readTarget.dispose();
         this.m_writeTarget.dispose();

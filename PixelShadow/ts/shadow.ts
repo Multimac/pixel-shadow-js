@@ -20,8 +20,6 @@ class ShadowJS {
         return this.m_loadingCount;
     }
 
-    private m_lightSize: number;
-
     private m_minBlur: number;
     public get minBlur(): number { return this.m_minBlur; }
     public set minBlur(val: number) { this.m_minBlur = val; }
@@ -41,6 +39,13 @@ class ShadowJS {
     private m_exponent: number;
     public get exponent(): number { return this.m_exponent; }
     public set exponent(val: number) { this.m_exponent = val; }
+
+    private m_lightGeometry: THREE.PlaneGeometry;
+    public get lightGeometry(): THREE.PlaneGeometry {
+        return <THREE.PlaneGeometry>this.m_lightGeometry.clone();
+    }
+
+    private m_lightSize: number;
 
     private m_lightCamera: THREE.OrthographicCamera;
 
@@ -73,8 +78,6 @@ class ShadowJS {
 
         this.m_loadingCount = 0;
 
-        this.m_lightSize = lightSize;
-
         this.m_minBlur = ShadowJS.default(options.minBlur, 0.0);
         this.m_maxBlur = ShadowJS.default(options.minBlur, 3.0);
 
@@ -82,6 +85,8 @@ class ShadowJS {
 
         this.m_ambient = ShadowJS.default(options.minBlur, 0.25);
         this.m_exponent = ShadowJS.default(options.minBlur, 1.0);
+
+        this.m_lightSize = lightSize;
 
         var halfLightSize = lightSize / 2.0;
         this.m_lightCamera = new THREE.OrthographicCamera(
