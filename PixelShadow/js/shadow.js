@@ -98,6 +98,7 @@ class ShadowJS {
         this.loadShader(this.m_bakeShader, "glsl/vs-fullscreen.glsl", "glsl/fs-bake.glsl");
     }
     get loadingCount() { return this.m_loadingCount; }
+    get generationTime() { return this.m_generationTime; }
     get minBlur() { return this.m_minBlur; }
     set minBlur(val) { this.m_minBlur = val; }
     get maxBlur() { return this.m_maxBlur; }
@@ -193,6 +194,8 @@ class ShadowJS {
         lightPos.z = 0; // Ignore z component of given vector
         // Prepare renderer
         renderer.setViewport(0, 0, sceneTarget.width, sceneTarget.height);
+        // Record time for tracking execution time
+        var startTime = performance.now();
         // Initial render into read/write buffers
         this.m_basicShader.uniforms["texture"].value = sceneTarget;
         var sceneTargetMesh = new THREE.Mesh(new THREE.PlaneGeometry(sceneTarget.width, sceneTarget.height), this.m_basicShader);
@@ -252,6 +255,8 @@ class ShadowJS {
         this.swapTargets();
         // Clean up and return read buffer
         this.m_scene.remove(this.m_fullScreenMesh);
+        // Calculate and store execution time
+        this.m_generationTime = performance.now() - startTime;
         return this.m_readTarget;
     }
 }

@@ -159,6 +159,8 @@
                 
                 shadowMap = m_shadow.generateShadowMap(m_renderer, m_sceneTarget, l.pos, l.color);
 
+                console.log(m_shadow.generationTime);
+
                 // Render shadow map
 
                 m_lightQuad.material = new THREE.MeshBasicMaterial({ map: shadowMap, transparent: true });

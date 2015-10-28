@@ -18,6 +18,9 @@ class ShadowJS {
     private m_loadingCount: number;
     public get loadingCount(): number { return this.m_loadingCount; }
 
+    private m_generationTime: number;
+    public get generationTime(): number { return this.m_generationTime; }
+
     private m_minBlur: number;
     public get minBlur(): number { return this.m_minBlur; }
     public set minBlur(val: number) { this.m_minBlur = val; }
@@ -294,6 +297,9 @@ class ShadowJS {
         // Prepare renderer
         renderer.setViewport(0, 0, sceneTarget.width, sceneTarget.height);
 
+        // Record time for tracking execution time
+        var startTime = performance.now();
+
         // Initial render into read/write buffers
         this.m_basicShader.uniforms["texture"].value = sceneTarget;
 
@@ -374,6 +380,9 @@ class ShadowJS {
 
         // Clean up and return read buffer
         this.m_scene.remove(this.m_fullScreenMesh);
+
+        // Calculate and store execution time
+        this.m_generationTime = performance.now() - startTime;
 
         return this.m_readTarget;
     }
