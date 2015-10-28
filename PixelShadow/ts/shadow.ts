@@ -16,9 +16,7 @@ interface ShadowJSOptions {
 
 class ShadowJS {
     private m_loadingCount: number;
-    public get loadingCount(): number {
-        return this.m_loadingCount;
-    }
+    public get loadingCount(): number { return this.m_loadingCount; }
 
     private m_minBlur: number;
     public get minBlur(): number { return this.m_minBlur; }

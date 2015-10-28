@@ -97,9 +97,7 @@ class ShadowJS {
         });
         this.loadShader(this.m_bakeShader, "glsl/vs-fullscreen.glsl", "glsl/fs-bake.glsl");
     }
-    get loadingCount() {
-        return this.m_loadingCount;
-    }
+    get loadingCount() { return this.m_loadingCount; }
     get minBlur() { return this.m_minBlur; }
     set minBlur(val) { this.m_minBlur = val; }
     get maxBlur() { return this.m_maxBlur; }
