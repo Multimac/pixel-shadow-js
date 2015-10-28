@@ -110,6 +110,22 @@ class ShadowJS {
     set ambient(val) { this.m_ambient = val; }
     get exponent() { return this.m_exponent; }
     set exponent(val) { this.m_exponent = val; }
+    dispose() {
+        this.m_readTarget.dispose();
+        this.m_writeTarget.dispose();
+        for (var i = 0; i < this.m_reduceTargets.length; i++) {
+            this.m_reduceTargets[i].dispose();
+        }
+        this.m_basicShader.dispose();
+        this.m_distanceShader.dispose();
+        this.m_distortShader.dispose();
+        this.m_reduceShader.dispose();
+        this.m_shadowShader.dispose();
+        this.m_blurHorShader.dispose();
+        this.m_blurVerShader.dispose();
+        this.m_attenuateShader.dispose();
+        this.m_bakeShader.dispose();
+    }
     static default(val, def) {
         return (typeof (val) !== "undefined") ? val : def;
     }

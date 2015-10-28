@@ -188,6 +188,24 @@ class ShadowJS {
         });
         this.loadShader(this.m_bakeShader, "glsl/vs-fullscreen.glsl", "glsl/fs-bake.glsl");
     }
+    public dispose() {
+        this.m_readTarget.dispose();
+        this.m_writeTarget.dispose();
+
+        for (var i = 0; i < this.m_reduceTargets.length; i++) {
+            this.m_reduceTargets[i].dispose();
+        }
+
+        this.m_basicShader.dispose();
+        this.m_distanceShader.dispose();
+        this.m_distortShader.dispose();
+        this.m_reduceShader.dispose();
+        this.m_shadowShader.dispose();
+        this.m_blurHorShader.dispose();
+        this.m_blurVerShader.dispose();
+        this.m_attenuateShader.dispose();
+        this.m_bakeShader.dispose();
+    }
 
     private static default(val: any, def: any) {
         return (typeof(val) !== "undefined") ? val : def;
