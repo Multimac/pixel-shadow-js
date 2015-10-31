@@ -23,6 +23,8 @@
     var m_lightQuad = null;
     var m_lightSize = null;
 
+    var m_tmp = null;
+
     var m_shadow = null;
 
     var m_loadingCount = 0;
@@ -117,6 +119,8 @@
             { pos: new THREE.Vector3(-150, -150, 0), color: new THREE.Vector4(1, 1, 1, 0.25) }
         ];
 
+        m_tmp = Math.floor(Date.now() / 1000);
+
         // Load external content
         var loadingManager = new THREE.LoadingManager();
         loadAllTextures(loadingManager);
@@ -140,6 +144,12 @@
         else {
             m_image.rotation.z += THREE.Math.degToRad(0.125);
 
+            if (Math.floor(Date.now() / 1000) != m_tmp) {
+                m_tmp = Math.floor(Date.now() / 1000);
+
+                console.log(m_shadow.generationTime);
+            }
+
             // Set up rendering
             m_renderer.setViewport(0, 0, m_canvasWidth, m_canvasHeight);
 
@@ -159,42 +169,41 @@
                 
                 shadowMap = m_shadow.generateShadowMap(m_renderer, m_sceneTarget, l.pos, l.color);
 
-                console.log(m_shadow.generationTime);
-
                 // Render shadow map
 
                 m_lightQuad.material = new THREE.MeshBasicMaterial({ map: shadowMap, transparent: true });
                 m_lightQuad.position.copy(l.pos);
 
-                m_renderer.clearDepth();
                 m_renderer.render(scene, m_camera);
             }
             scene.remove(m_lightQuad);
 
-            // Render all objects
-            m_renderer.clearTarget(m_sceneTarget);
+            //debugger;
 
-            m_renderer.render(m_completeScene, m_camera, m_sceneTarget);
-            m_renderer.render(m_casterScene, m_camera, m_sceneTarget);
+            // // Render all objects
+            // m_renderer.clearTarget(m_sceneTarget);
 
-            // Render shadow casters (for shimmering effect)
-            scene.add(m_fullScreenQuad);
+            // m_renderer.render(m_completeScene, m_camera, m_sceneTarget);
+            // m_renderer.render(m_casterScene, m_camera, m_sceneTarget);
 
-            options = {
-                map: m_sceneTarget,
-                blending: THREE.CustomBlending,
-                blendEquation: THREE.AddEquation,
-                blendSrc: THREE.DstColorFactor,
-                blendDst: THREE.SrcColorFactor,
-                transparent: true
-            };
+            // // Render shadow casters (for shimmering effect)
+            // scene.add(m_fullScreenQuad);
 
-            m_fullScreenQuad.material = new THREE.MeshBasicMaterial(options);
+            // options = {
+            //     map: m_sceneTarget,
+            //     blending: THREE.CustomBlending,
+            //     blendEquation: THREE.AddEquation,
+            //     blendSrc: THREE.DstColorFactor,
+            //     blendDst: THREE.SrcColorFactor,
+            //     transparent: true
+            // };
 
-            m_renderer.clearDepth();
-            m_renderer.render(scene, m_fullScreenCamera);
+            // m_fullScreenQuad.material = new THREE.MeshBasicMaterial(options);
 
-            scene.remove(m_fullScreenQuad);
+            // m_renderer.clearDepth();
+            // m_renderer.render(scene, m_fullScreenCamera);
+
+            // scene.remove(m_fullScreenQuad);
         }
     };
 
