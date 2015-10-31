@@ -5,6 +5,8 @@
 interface ShadowJSOptions {
     renderTargetSize?: number;
 
+    threshold?: number;
+
     minBlur?: number;
     maxBlur?: number;
 
@@ -20,6 +22,10 @@ class ShadowJS {
 
     private m_generationTime: number;
     public get generationTime(): number { return this.m_generationTime; }
+
+    private m_threshold: number;
+    public get threshold(): number { return this.m_threshold; }
+    public set threshold(val: number) { this.m_threshold = val; }
 
     private m_minBlur: number;
     public get minBlur(): number { return this.m_minBlur; }
@@ -59,14 +65,14 @@ class ShadowJS {
     private m_reduceTargets: THREE.WebGLRenderTarget[];
 
     private m_basicShader: THREE.ShaderMaterial;
-    private m_distanceShader: THREE.ShaderMaterial;
-    private m_distortShader: THREE.ShaderMaterial;
-    private m_reduceShader: THREE.ShaderMaterial;
+    private m_distanceDistortShader: THREE.ShaderMaterial;
+    private m_reduceX2Shader: THREE.ShaderMaterial;
+    private m_reduceX4Shader: THREE.ShaderMaterial;
+    private m_reduceX8Shader: THREE.ShaderMaterial;
     private m_shadowShader: THREE.ShaderMaterial;
     private m_blurHorShader: THREE.ShaderMaterial;
     private m_blurVerShader: THREE.ShaderMaterial;
-    private m_attenuateShader: THREE.ShaderMaterial;
-    private m_bakeShader: THREE.ShaderMaterial;
+    private m_attenuateBakeShader: THREE.ShaderMaterial;
 
     constructor(lightSize: number, options?: ShadowJSOptions) {
         options = ShadowJS.default(options, { });
@@ -77,6 +83,8 @@ class ShadowJS {
         }
 
         this.m_loadingCount = 0;
+
+        this.m_threshold = ShadowJS.default(options.threshold, 0.25);
 
         this.m_minBlur = ShadowJS.default(options.minBlur, 0.0);
         this.m_maxBlur = ShadowJS.default(options.minBlur, 3.0);
@@ -125,27 +133,35 @@ class ShadowJS {
         });
         this.loadShader(this.m_basicShader, "glsl/vs-fullscreen.glsl", "glsl/fs-basic.glsl");
 
-        this.m_distanceShader = new THREE.ShaderMaterial({
+        this.m_distanceDistortShader = new THREE.ShaderMaterial({
             uniforms: {
-                texture: { type: "t", value: null }
+                texture: { type: "t", value: null },
+                threshold: { type: "f", value: 0.0 }
             }
         });
-        this.loadShader(this.m_distanceShader, "glsl/vs-fullscreen.glsl", "glsl/fs-distance.glsl");
+        this.loadShader(this.m_distanceDistortShader, "glsl/vs-fullscreen.glsl", "glsl/fs-distance-distort.glsl");
 
-        this.m_distortShader = new THREE.ShaderMaterial({
-            uniforms: {
-                texture: { type: "t", value: null }
-            }
-        });
-        this.loadShader(this.m_distortShader, "glsl/vs-fullscreen.glsl", "glsl/fs-distort.glsl");
-
-        this.m_reduceShader = new THREE.ShaderMaterial({
+        this.m_reduceX2Shader = new THREE.ShaderMaterial({
             uniforms: {
                 texture: { type: "t", value: null },
                 pixelSize: { type: "f", value: 0.0 }
             }
         });
-        this.loadShader(this.m_reduceShader, "glsl/vs-fullscreen.glsl", "glsl/fs-reduce.glsl");
+        this.loadShader(this.m_reduceX2Shader, "glsl/vs-fullscreen.glsl", "glsl/fs-reducex2.glsl");
+        this.m_reduceX4Shader = new THREE.ShaderMaterial({
+            uniforms: {
+                texture: { type: "t", value: null },
+                pixelSize: { type: "f", value: 0.0 }
+            }
+        });
+        this.loadShader(this.m_reduceX4Shader, "glsl/vs-fullscreen.glsl", "glsl/fs-reducex4.glsl");
+        this.m_reduceX8Shader = new THREE.ShaderMaterial({
+            uniforms: {
+                texture: { type: "t", value: null },
+                pixelSize: { type: "f", value: 0.0 }
+            }
+        });
+        this.loadShader(this.m_reduceX8Shader, "glsl/vs-fullscreen.glsl", "glsl/fs-reducex8.glsl");
 
         this.m_shadowShader = new THREE.ShaderMaterial({
             uniforms: {
@@ -176,22 +192,15 @@ class ShadowJS {
         });
         this.loadShader(this.m_blurVerShader, "glsl/vs-fullscreen.glsl", "glsl/fs-blurVer.glsl");
 
-        this.m_attenuateShader = new THREE.ShaderMaterial({
+        this.m_attenuateBakeShader = new THREE.ShaderMaterial({
             uniforms: {
                 texture: { type: "t", value: null },
                 ambient: { type: "f", value: 0.0 },
-                exponent: { type: "f", value: 0.0 }
+                exponent: { type: "f", value: 0.0 },
+                color: { type: "v4", value: new THREE.Vector4(1, 1, 1, 1) }
             }
         });
-        this.loadShader(this.m_attenuateShader, "glsl/vs-fullscreen.glsl", "glsl/fs-attenuate.glsl");
-
-        this.m_bakeShader = new THREE.ShaderMaterial({
-            uniforms: {
-                texture: { type: "t", value: null },
-                color: { type: "v4", value: 0.0 }
-            }
-        });
-        this.loadShader(this.m_bakeShader, "glsl/vs-fullscreen.glsl", "glsl/fs-bake.glsl");
+        this.loadShader(this.m_attenuateBakeShader, "glsl/vs-fullscreen.glsl", "glsl/fs-attenuate-bake.glsl");
     }
     public dispose() {
         this.m_readTarget.dispose();
@@ -202,14 +211,12 @@ class ShadowJS {
         }
 
         this.m_basicShader.dispose();
-        this.m_distanceShader.dispose();
-        this.m_distortShader.dispose();
-        this.m_reduceShader.dispose();
+        this.m_distanceDistortShader.dispose();
+        this.m_reduceX2Shader.dispose();
         this.m_shadowShader.dispose();
         this.m_blurHorShader.dispose();
         this.m_blurVerShader.dispose();
-        this.m_attenuateShader.dispose();
-        this.m_bakeShader.dispose();
+        this.m_attenuateBakeShader.dispose();
     }
 
     private static default(val: any, def: any) {
@@ -275,17 +282,39 @@ class ShadowJS {
     private generateReduceMaps(renderer: THREE.WebGLRenderer) {
         this.m_scene.add(this.m_fullScreenMesh);
 
-        var step = this.m_reduceTargets.length - 1;
+        var step = this.m_reduceTargets.length;
 
         var readTarget = this.m_readTarget;
-        while (step >= 0) {
+        while (step > 0) {
+            var reduceShader = null;
+            var stepReduction = 0;
+            switch (step) {
+                default:
+                    reduceShader = this.m_reduceX8Shader;
+                    stepReduction = 3;
+                    break;
+
+                case 2:
+                    reduceShader = this.m_reduceX4Shader;
+                    stepReduction = 2;
+                    break;
+
+                case 1:
+                    reduceShader = this.m_reduceX2Shader;
+                    stepReduction = 1;
+                    break;
+            }
+
+            step -= stepReduction;
+
             var stepTarget = this.m_reduceTargets[step];
 
-            this.runShaderPass(renderer, stepTarget, this.m_reduceShader, { texture: readTarget, pixelSize: 1.0 / readTarget.width });
+            this.runShaderPass(renderer, stepTarget, reduceShader, {
+                texture: readTarget,
+                pixelSize: 1.0 / readTarget.width
+            });
 
             readTarget = stepTarget;
-
-            step--;
         }
 
         this.m_scene.remove(this.m_fullScreenMesh);
@@ -323,18 +352,19 @@ class ShadowJS {
 
         this.m_scene.add(this.m_fullScreenMesh);
 
-        // Compute distance map
-        this.runShaderPass(renderer, this.m_writeTarget, this.m_distanceShader, { texture: this.m_readTarget });
-        this.swapTargets();
-
-        // Distort distance map
-        this.runShaderPass(renderer, this.m_writeTarget, this.m_distortShader, { texture: this.m_readTarget });
+        // Compute distance and distort the shadow map
+        this.runShaderPass(renderer, this.m_writeTarget, this.m_distanceDistortShader, {
+            texture: this.m_readTarget,
+            threshold: this.m_threshold
+        });
         this.swapTargets();
 
         // Shrink distort map
         this.m_scene.remove(this.m_fullScreenMesh);
 
-        this.generateReduceMaps(renderer);
+        for (var i = 0; i < 10; i++) {
+            this.generateReduceMaps(renderer);
+        }
 
         this.m_scene.add(this.m_fullScreenMesh);
 
@@ -363,17 +393,11 @@ class ShadowJS {
         });
         this.swapTargets();
 
-        // Attenuate shadow map
-        this.runShaderPass(renderer, this.m_writeTarget, this.m_attenuateShader, {
+        // Attenuate and color the shadow map
+        this.runShaderPass(renderer, this.m_writeTarget, this.m_attenuateBakeShader, {
             texture: this.m_readTarget,
             ambient: this.m_ambient,
-            exponent: this.m_exponent
-        });
-        this.swapTargets();
-
-        // Color shadow map
-        this.runShaderPass(renderer, this.m_writeTarget, this.m_bakeShader, {
-            texture: this.m_readTarget,
+            exponent: this.m_exponent,
             color: lightColor
         });
         this.swapTargets();
