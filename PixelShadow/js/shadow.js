@@ -275,6 +275,7 @@ class ShadowJS {
         this.swapTargets();
         // Clean up and return read buffer
         this.m_scene.remove(this.m_fullScreenMesh);
+        sceneTargetMesh.geometry.dispose();
         // Calculate and store execution time
         this.m_generationTime = performance.now() - startTime;
         return this.m_readTarget;
