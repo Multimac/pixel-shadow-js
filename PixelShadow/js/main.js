@@ -22,6 +22,7 @@
     var m_lights = null;
     var m_lightQuad = null;
     var m_lightSize = null;
+    var m_lightScene = null;
 
     var m_tmp = null;
 
@@ -118,6 +119,8 @@
             { pos: new THREE.Vector3( 400,  100, 0), color: new THREE.Vector4(1, 1, 1, 1.00) },
             { pos: new THREE.Vector3(-150, -150, 0), color: new THREE.Vector4(1, 1, 1, 0.25) }
         ];
+        m_lightScene = new THREE.Scene();
+        m_lightScene.add(m_lightQuad);
 
         m_tmp = Math.floor(Date.now() / 1000);
 
@@ -159,11 +162,8 @@
             m_renderer.render(m_casterScene, m_camera, m_sceneTarget);
 
             // Render all lights
-            var scene = new THREE.Scene();
-
             m_renderer.clearTarget(null);
 
-            scene.add(m_lightQuad);
             for (var i = 0; i < m_lights.length; i++) {
                 var l = m_lights[i];
                 
@@ -174,9 +174,11 @@
                 m_lightQuad.material = new THREE.MeshBasicMaterial({ map: shadowMap, transparent: true });
                 m_lightQuad.position.copy(l.pos);
 
-                m_renderer.render(scene, m_camera);
+                m_renderer.render(m_lightScene, m_camera);
+
+                m_lightQuad.material.dispose();
+                m_lightQuad.material = undefined;
             }
-            scene.remove(m_lightQuad);
 
             //debugger;
 

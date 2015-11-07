@@ -1,5 +1,4 @@
-/// <reference path="typings/threejs/three.d.ts" />
-/// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/tsd.d.ts" />
 "use strict";
 class ShadowJS {
     constructor(lightSize, options) {
@@ -15,12 +14,18 @@ class ShadowJS {
         this.m_bias = ShadowJS.default(options.minBlur, 2.0);
         this.m_ambient = ShadowJS.default(options.minBlur, 0.25);
         this.m_exponent = ShadowJS.default(options.minBlur, 1.0);
+        this.initShaders();
         this.m_lightSize = lightSize;
         var halfLightSize = lightSize / 2.0;
         this.m_lightCamera = new THREE.OrthographicCamera(-halfLightSize, halfLightSize, halfLightSize, -halfLightSize, 0.0, 1.0);
         this.m_fullScreenCamera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0.0, 1.0);
         this.m_fullScreenMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.0));
-        this.m_scene = new THREE.Scene();
+        this.m_fullScreenScene = new THREE.Scene();
+        this.m_fullScreenScene.add(this.m_fullScreenMesh);
+        this.m_sceneTargetGeometry = new THREE.PlaneGeometry(1.0, 1.0);
+        this.m_sceneTargetMesh = new THREE.Mesh(this.m_sceneTargetGeometry, this.m_basicShader);
+        this.m_sceneTargetScene = new THREE.Scene();
+        this.m_sceneTargetScene.add(this.m_sceneTargetMesh);
         this.m_readTarget = new THREE.WebGLRenderTarget(targetSize, targetSize);
         this.m_writeTarget = new THREE.WebGLRenderTarget(targetSize, targetSize);
         var targetSizePow = Math.log2(targetSize);
@@ -31,6 +36,25 @@ class ShadowJS {
                 minFilter: THREE.NearestFilter
             });
         }
+    }
+    get loadingCount() { return this.m_loadingCount; }
+    get generationTime() { return this.m_generationTime; }
+    get threshold() { return this.m_threshold; }
+    set threshold(val) { this.m_threshold = val; }
+    get minBlur() { return this.m_minBlur; }
+    set minBlur(val) { this.m_minBlur = val; }
+    get maxBlur() { return this.m_maxBlur; }
+    set maxBlur(val) { this.m_maxBlur = val; }
+    get bias() { return this.m_bias; }
+    set bias(val) { this.m_bias = val; }
+    get ambient() { return this.m_ambient; }
+    set ambient(val) { this.m_ambient = val; }
+    get exponent() { return this.m_exponent; }
+    set exponent(val) { this.m_exponent = val; }
+    get lightGeometry() {
+        return new THREE.PlaneGeometry(this.m_lightSize, this.m_lightSize);
+    }
+    initShaders() {
         this.m_basicShader = new THREE.ShaderMaterial({
             uniforms: {
                 texture: { type: "t", value: null }
@@ -101,23 +125,6 @@ class ShadowJS {
         });
         this.loadShader(this.m_attenuateBakeShader, "glsl/vs-fullscreen.glsl", "glsl/fs-attenuate-bake.glsl");
     }
-    get loadingCount() { return this.m_loadingCount; }
-    get generationTime() { return this.m_generationTime; }
-    get threshold() { return this.m_threshold; }
-    set threshold(val) { this.m_threshold = val; }
-    get minBlur() { return this.m_minBlur; }
-    set minBlur(val) { this.m_minBlur = val; }
-    get maxBlur() { return this.m_maxBlur; }
-    set maxBlur(val) { this.m_maxBlur = val; }
-    get bias() { return this.m_bias; }
-    set bias(val) { this.m_bias = val; }
-    get ambient() { return this.m_ambient; }
-    set ambient(val) { this.m_ambient = val; }
-    get exponent() { return this.m_exponent; }
-    set exponent(val) { this.m_exponent = val; }
-    get lightGeometry() {
-        return new THREE.PlaneGeometry(this.m_lightSize, this.m_lightSize);
-    }
     dispose() {
         this.m_readTarget.dispose();
         this.m_writeTarget.dispose();
@@ -175,7 +182,7 @@ class ShadowJS {
             shader.uniforms[k].value = uniforms[k];
         }
         this.m_fullScreenMesh.material = shader;
-        renderer.render(this.m_scene, this.m_fullScreenCamera, target, true);
+        renderer.render(this.m_fullScreenScene, this.m_fullScreenCamera, target, true);
     }
     swapTargets() {
         var tmp = this.m_readTarget;
@@ -183,7 +190,6 @@ class ShadowJS {
         this.m_writeTarget = tmp;
     }
     generateReduceMaps(renderer) {
-        this.m_scene.add(this.m_fullScreenMesh);
         var step = this.m_reduceTargets.length;
         var readTarget = this.m_readTarget;
         while (step > 0) {
@@ -211,7 +217,6 @@ class ShadowJS {
             });
             readTarget = stepTarget;
         }
-        this.m_scene.remove(this.m_fullScreenMesh);
     }
     generateShadowMap(renderer, sceneTarget, lightPos, lightColor) {
         lightPos.z = 0; // Ignore z component of given vector
@@ -221,16 +226,19 @@ class ShadowJS {
         var startTime = performance.now();
         // Initial render into read/write buffers
         this.m_basicShader.uniforms["texture"].value = sceneTarget;
-        var sceneTargetMesh = new THREE.Mesh(new THREE.PlaneGeometry(sceneTarget.width, sceneTarget.height), this.m_basicShader);
-        sceneTargetMesh.position.copy(lightPos);
-        sceneTargetMesh.position.negate();
-        this.m_scene.add(sceneTargetMesh);
-        renderer.render(this.m_scene, this.m_lightCamera, this.m_writeTarget, true);
-        this.m_scene.remove(sceneTargetMesh);
+        var geomParams = this.m_sceneTargetGeometry.parameters;
+        if (geomParams.width != sceneTarget.width || geomParams.height != sceneTarget.height) {
+            this.m_sceneTargetGeometry.dispose();
+            console.log("recreating sceneTargetGeometry: " + sceneTarget.width + ", " + sceneTarget.height);
+            this.m_sceneTargetGeometry = new THREE.PlaneGeometry(sceneTarget.width, sceneTarget.height);
+            this.m_sceneTargetMesh.geometry = this.m_sceneTargetGeometry;
+        }
+        this.m_sceneTargetMesh.position.copy(lightPos);
+        this.m_sceneTargetMesh.position.negate();
+        renderer.render(this.m_sceneTargetScene, this.m_lightCamera, this.m_writeTarget, true);
         this.swapTargets();
         // Set up post processing
         var pixelSize = 1.0 / this.m_lightSize;
-        this.m_scene.add(this.m_fullScreenMesh);
         // Compute distance and distort the shadow map
         this.runShaderPass(renderer, this.m_writeTarget, this.m_distanceDistortShader, {
             texture: this.m_readTarget,
@@ -238,11 +246,9 @@ class ShadowJS {
         });
         this.swapTargets();
         // Shrink distort map
-        this.m_scene.remove(this.m_fullScreenMesh);
         for (var i = 0; i < 10; i++) {
             this.generateReduceMaps(renderer);
         }
-        this.m_scene.add(this.m_fullScreenMesh);
         // Generate shadow map
         this.runShaderPass(renderer, this.m_writeTarget, this.m_shadowShader, {
             texture: this.m_reduceTargets[0],
@@ -273,9 +279,6 @@ class ShadowJS {
             color: lightColor
         });
         this.swapTargets();
-        // Clean up and return read buffer
-        this.m_scene.remove(this.m_fullScreenMesh);
-        sceneTargetMesh.geometry.dispose();
         // Calculate and store execution time
         this.m_generationTime = performance.now() - startTime;
         return this.m_readTarget;
