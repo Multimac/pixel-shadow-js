@@ -5,8 +5,9 @@ class ShadowJS {
         options = ShadowJS.default(options, {});
         var targetSize = ShadowJS.default(options.renderTargetSize, lightSize);
         if (!ShadowJS.powerOfTwo(targetSize)) {
-            throw "TODO: Exception";
+            throw RangeError("lightSize must be a power of two");
         }
+        this.m_errorLoading = false;
         this.m_loadingCount = 0;
         this.m_threshold = ShadowJS.default(options.threshold, 0.25);
         this.m_minBlur = ShadowJS.default(options.minBlur, 0.0);
@@ -37,6 +38,7 @@ class ShadowJS {
             });
         }
     }
+    get errorLoading() { return this.m_errorLoading; }
     get loadingCount() { return this.m_loadingCount; }
     get generationTime() { return this.m_generationTime; }
     get threshold() { return this.m_threshold; }
@@ -141,7 +143,7 @@ class ShadowJS {
     }
     static powerOfTwo(num) {
         if (num < 0) {
-            throw "TODO: Exception";
+            throw new RangeError("num cannot be negative");
         }
         return num != 0 && (num & (num - 1)) == 0;
     }
@@ -162,6 +164,7 @@ class ShadowJS {
             material.fragmentShader = source[1];
             console.log("loaded: " + fragmentURL);
         }).catch(function (err) {
+            self.m_errorLoading = true;
             console.log("failed: " + err.message);
         }).then(function () {
             self.m_loadingCount--;

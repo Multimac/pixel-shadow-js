@@ -16,6 +16,9 @@ interface ShadowJSOptions {
 }
 
 class ShadowJS {
+    private m_errorLoading: boolean;
+    public get errorLoading(): boolean { return this.m_errorLoading; }
+
     private m_loadingCount: number;
     public get loadingCount(): number { return this.m_loadingCount; }
 
@@ -81,9 +84,10 @@ class ShadowJS {
 
         var targetSize = ShadowJS.default(options.renderTargetSize, lightSize);
         if (!ShadowJS.powerOfTwo(targetSize)) {
-            throw "TODO: Exception";
+            throw RangeError("lightSize must be a power of two");
         }
 
+        this.m_errorLoading = false;
         this.m_loadingCount = 0;
 
         this.m_threshold = ShadowJS.default(options.threshold, 0.25);
@@ -245,7 +249,7 @@ class ShadowJS {
     }
     private static powerOfTwo(num: number) {
         if (num < 0) {
-            throw "TODO: Exception";
+            throw new RangeError("num cannot be negative");
         }
 
         return num != 0 && (num & (num - 1)) == 0;
@@ -272,6 +276,7 @@ class ShadowJS {
             material.fragmentShader = source[1];
             console.log("loaded: " + fragmentURL);
         }).catch(function (err: Error) {
+            self.m_errorLoading = true;
             console.log("failed: " + err.message);
         }).then(function () {
             self.m_loadingCount--;
