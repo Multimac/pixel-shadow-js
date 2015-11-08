@@ -107,7 +107,7 @@
         m_imageTwo = new THREE.Mesh(new THREE.PlaneGeometry(1, 1));
         m_completeScene.add(m_imageTwo);
 
-        m_shadow = new ShadowJS(256, { renderTargetSize: 1024 });
+        m_shadow = new ShadowJS.Shadow(256, { renderTargetSize: 1024 });
 
         m_lightQuad = new THREE.Mesh(
             m_shadow.lightGeometry
