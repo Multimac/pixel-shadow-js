@@ -23,7 +23,7 @@ class ShadowJS {
         this.m_fullScreenScene = new THREE.Scene();
         this.m_fullScreenScene.add(this.m_fullScreenMesh);
         this.m_sceneTargetGeometry = new THREE.PlaneGeometry(1.0, 1.0);
-        this.m_sceneTargetMesh = new THREE.Mesh(this.m_sceneTargetGeometry, this.m_basicShader);
+        this.m_sceneTargetMesh = new THREE.Mesh(this.m_sceneTargetGeometry, null);
         this.m_sceneTargetScene = new THREE.Scene();
         this.m_sceneTargetScene.add(this.m_sceneTargetMesh);
         this.m_readTarget = new THREE.WebGLRenderTarget(targetSize, targetSize);
@@ -55,77 +55,72 @@ class ShadowJS {
         return new THREE.PlaneGeometry(this.m_lightSize, this.m_lightSize);
     }
     initShaders() {
-        this.m_basicShader = new THREE.ShaderMaterial({
-            uniforms: {
-                texture: { type: "t", value: null }
-            }
+        var self = this;
+        this.createShader({
+            texture: { type: "t", value: null }
+        }, "glsl/vs-fullscreen.glsl", "glsl/fs-basic.glsl").then(function (material) {
+            self.m_basicShader = material;
+            self.m_sceneTargetMesh.material = material;
         });
-        this.loadShader(this.m_basicShader, "glsl/vs-fullscreen.glsl", "glsl/fs-basic.glsl");
-        this.m_distanceDistortShader = new THREE.ShaderMaterial({
-            uniforms: {
-                texture: { type: "t", value: null },
-                threshold: { type: "f", value: 0.0 }
-            }
+        this.createShader({
+            texture: { type: "t", value: null },
+            threshold: { type: "f", value: 0.0 }
+        }, "glsl/vs-fullscreen.glsl", "glsl/fs-distance-distort.glsl").then(function (material) {
+            self.m_distanceDistortShader = material;
         });
-        this.loadShader(this.m_distanceDistortShader, "glsl/vs-fullscreen.glsl", "glsl/fs-distance-distort.glsl");
-        this.m_reduceX2Shader = new THREE.ShaderMaterial({
-            uniforms: {
-                texture: { type: "t", value: null },
-                pixelSize: { type: "f", value: 0.0 }
-            }
+        this.createShader({
+            texture: { type: "t", value: null },
+            pixelSize: { type: "f", value: 0.0 }
+        }, "glsl/vs-fullscreen.glsl", "glsl/fs-reducex2.glsl").then(function (material) {
+            self.m_reduceX2Shader = material;
         });
-        this.loadShader(this.m_reduceX2Shader, "glsl/vs-fullscreen.glsl", "glsl/fs-reducex2.glsl");
-        this.m_reduceX4Shader = new THREE.ShaderMaterial({
-            uniforms: {
-                texture: { type: "t", value: null },
-                pixelSize: { type: "f", value: 0.0 }
-            }
+        this.createShader({
+            texture: { type: "t", value: null },
+            pixelSize: { type: "f", value: 0.0 }
+        }, "glsl/vs-fullscreen.glsl", "glsl/fs-reducex4.glsl").then(function (material) {
+            self.m_reduceX4Shader = material;
         });
-        this.loadShader(this.m_reduceX4Shader, "glsl/vs-fullscreen.glsl", "glsl/fs-reducex4.glsl");
-        this.m_reduceX8Shader = new THREE.ShaderMaterial({
-            uniforms: {
-                texture: { type: "t", value: null },
-                pixelSize: { type: "f", value: 0.0 }
-            }
+        this.createShader({
+            texture: { type: "t", value: null },
+            pixelSize: { type: "f", value: 0.0 }
+        }, "glsl/vs-fullscreen.glsl", "glsl/fs-reducex8.glsl").then(function (material) {
+            self.m_reduceX8Shader = material;
         });
-        this.loadShader(this.m_reduceX8Shader, "glsl/vs-fullscreen.glsl", "glsl/fs-reducex8.glsl");
-        this.m_shadowShader = new THREE.ShaderMaterial({
-            uniforms: {
-                texture: { type: "t", value: null },
-                pixelSize: { type: "f", value: 0.0 },
-                bias: { type: "f", value: 0.0 }
-            }
+        this.createShader({
+            texture: { type: "t", value: null },
+            pixelSize: { type: "f", value: 0.0 },
+            bias: { type: "f", value: 0.0 }
+        }, "glsl/vs-fullscreen.glsl", "glsl/fs-shadow.glsl").then(function (material) {
+            self.m_shadowShader = material;
         });
-        this.loadShader(this.m_shadowShader, "glsl/vs-fullscreen.glsl", "glsl/fs-shadow.glsl");
-        this.m_blurHorShader = new THREE.ShaderMaterial({
-            uniforms: {
-                texture: { type: "t", value: null },
-                pixelSize: { type: "f", value: 0.0 },
-                minBlur: { type: "f", value: 0.0 },
-                maxBlur: { type: "f", value: 0.0 }
-            }
+        this.createShader({
+            texture: { type: "t", value: null },
+            pixelSize: { type: "f", value: 0.0 },
+            minBlur: { type: "f", value: 0.0 },
+            maxBlur: { type: "f", value: 0.0 }
+        }, "glsl/vs-fullscreen.glsl", "glsl/fs-blurHor.glsl").then(function (material) {
+            self.m_blurHorShader = material;
         });
-        this.loadShader(this.m_blurHorShader, "glsl/vs-fullscreen.glsl", "glsl/fs-blurHor.glsl");
-        this.m_blurVerShader = new THREE.ShaderMaterial({
-            uniforms: {
-                texture: { type: "t", value: null },
-                pixelSize: { type: "f", value: 0.0 },
-                minBlur: { type: "f", value: 0.0 },
-                maxBlur: { type: "f", value: 0.0 }
-            }
+        this.createShader({
+            texture: { type: "t", value: null },
+            pixelSize: { type: "f", value: 0.0 },
+            minBlur: { type: "f", value: 0.0 },
+            maxBlur: { type: "f", value: 0.0 }
+        }, "glsl/vs-fullscreen.glsl", "glsl/fs-blurVer.glsl").then(function (material) {
+            self.m_blurVerShader = material;
         });
-        this.loadShader(this.m_blurVerShader, "glsl/vs-fullscreen.glsl", "glsl/fs-blurVer.glsl");
-        this.m_attenuateBakeShader = new THREE.ShaderMaterial({
-            uniforms: {
-                texture: { type: "t", value: null },
-                ambient: { type: "f", value: 0.0 },
-                exponent: { type: "f", value: 0.0 },
-                color: { type: "v4", value: new THREE.Vector4(1, 1, 1, 1) }
-            }
+        this.createShader({
+            texture: { type: "t", value: null },
+            ambient: { type: "f", value: 0.0 },
+            exponent: { type: "f", value: 0.0 },
+            color: { type: "v4", value: new THREE.Vector4(1, 1, 1, 1) }
+        }, "glsl/vs-fullscreen.glsl", "glsl/fs-attenuate-bake.glsl").then(function (material) {
+            self.m_attenuateBakeShader = material;
         });
-        this.loadShader(this.m_attenuateBakeShader, "glsl/vs-fullscreen.glsl", "glsl/fs-attenuate-bake.glsl");
     }
     dispose() {
+        this.m_fullScreenMesh.geometry.dispose();
+        this.m_sceneTargetGeometry.dispose();
         this.m_readTarget.dispose();
         this.m_writeTarget.dispose();
         for (var i = 0; i < this.m_reduceTargets.length; i++) {
@@ -134,6 +129,8 @@ class ShadowJS {
         this.m_basicShader.dispose();
         this.m_distanceDistortShader.dispose();
         this.m_reduceX2Shader.dispose();
+        this.m_reduceX4Shader.dispose();
+        this.m_reduceX8Shader.dispose();
         this.m_shadowShader.dispose();
         this.m_blurHorShader.dispose();
         this.m_blurVerShader.dispose();
@@ -148,31 +145,27 @@ class ShadowJS {
         }
         return num != 0 && (num & (num - 1)) == 0;
     }
+    createShader(uniforms, vertexURL, fragmentURL) {
+        var material = new THREE.ShaderMaterial({ uniforms: uniforms });
+        return this.loadShader(material, vertexURL, fragmentURL);
+    }
     loadShader(material, vertexURL, fragmentURL) {
         this.m_loadingCount++;
-        $.ajax(vertexURL, {
-            context: this,
-            error: function () {
-                console.log("failed: " + vertexURL);
-                this.m_loadingCount--;
-            },
-            success: function (data) {
-                material.vertexShader = data;
-                console.log("loaded: " + vertexURL);
-                this.m_loadingCount--;
-            }
-        });
-        $.ajax(fragmentURL, {
-            context: this,
-            error: function () {
-                console.log("failed: " + fragmentURL);
-                this.m_loadingCount--;
-            },
-            success: function (data) {
-                material.fragmentShader = data;
-                console.log("loaded: " + fragmentURL);
-                this.m_loadingCount--;
-            }
+        var promises = [
+            $.ajax(vertexURL),
+            $.ajax(fragmentURL)
+        ];
+        var self = this;
+        return Promise.all(promises).then(function (source) {
+            material.vertexShader = source[0];
+            console.log("loaded: " + vertexURL);
+            material.fragmentShader = source[1];
+            console.log("loaded: " + fragmentURL);
+        }).catch(function (err) {
+            console.log("failed: " + err.message);
+        }).then(function () {
+            self.m_loadingCount--;
+            return material;
         });
     }
     runShaderPass(renderer, target, shader, uniforms) {

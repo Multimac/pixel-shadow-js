@@ -144,6 +144,8 @@
 
         if (m_loadingCount != 0)
             console.log("waiting on " + m_loadingCount + "...");
+        else if (m_shadow.loading)
+            console.log("waiting on ShadowJS...");
         else {
             m_image.rotation.z += THREE.Math.degToRad(0.125);
 
